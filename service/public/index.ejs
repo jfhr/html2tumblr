@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>HTML 2 Tumblr</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <style>
+      html {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        color-scheme: light dark;
+      }
+
+      .container {
+        --body-width: 100%;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: var(--body-width);
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      @media (min-width: 576px) {
+        .container {
+          --body-width: 540px
+        }
+      }
+
+      @media (min-width: 768px) {
+        .container {
+          --body-width: 720px
+        }
+      }
+
+      @media (min-width: 992px) {
+        .container {
+          --body-width: 960px
+        }
+      }
+
+      @media (min-width: 1200px) {
+        .container {
+          --body-width: 1140px
+        }
+      }
+
+      @media (min-width: 1400px) {
+        .container {
+          --body-width: 1320px
+        }
+      }
+
+      @keyframes move-background {
+        from {
+          background-position: 0 50%;
+        }
+        to {
+          background-position: 200% 50%;
+        }
+      }
+
+      #upload-container {
+        width: 100%;
+        height: 400px;
+        border: 2px dashed hsl(0, 0%, 50%);
+        background-color: hsl(0, 0%, 80%);
+        border-radius: 12px;
+        transition: background-color 0.2s;
+      }
+
+      #upload-container:hover, #upload-container.drag {
+        border: 2px dashed hsl(0, 0%, 40%);
+        background-color: hsl(0, 0%, 70%);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        #upload-container {
+          border: 2px dashed hsl(0, 0%, 40%);
+          background-color: hsl(0, 0%, 20%);
+        }
+        #upload-container:hover, #upload-container.drag {
+          border: 2px dashed hsl(0, 0%, 50%);
+          background-color: hsl(0, 0%, 30%);
+        }
+      }
+
+      #upload-label {
+        width: 100%;
+        height: 100%;
+        font-size: larger;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1em;
+      }
+
+      #upload-submit {
+        margin-top: 1em;
+        margin-bottom: 1em;
+        padding: 1em;
+        font-size: larger;
+
+        border: 1px solid grey;
+        border-radius: 12px;
+        box-shadow: 0 0 2px 0 black;
+      }
+
+
+      #upload-submit:hover {
+        background: linear-gradient(90deg, #5acffa, #f5abb9, #ffffff, #f5abb9, #5acffa);
+      }
+      @media (prefers-color-scheme: dark) {
+        #upload-submit {
+          background-color: #2b2a33;
+          border: 1px solid dimgrey;
+        }
+        #upload-submit:hover {
+          background: linear-gradient(90deg, #48a5c7, #c28892, #b3b3b3, #c28892, #48a5c7);
+        }
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        #upload-submit:hover {
+          /*background: linear-gradient(90deg, #5acffa, #f5abb9, #ffffff, #f5abb9, #5acffa);*/
+          background-size: 200% 200%;
+          animation: move-background;
+          animation-duration: 2s;
+          animation-iteration-count: infinite;
+          animation-direction: normal;
+          animation-timing-function: linear;
+        }
+      }
+
+      @media (prefers-color-scheme: dark) {
+        a {
+          color: rgb(140, 140, 255);
+        }
+      }
+
+      .shell:before {
+        content: '$ ';
+      }
+    </style>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+          const input = document.getElementById('upload-input');
+          const message = document.getElementById('upload-message');
+          const container = document.getElementById('upload-container');
+          container.addEventListener('dragenter', () => {
+            message.innerText = 'Drop HTML file:';
+            container.classList.add('drag');
+          });
+          container.addEventListener('dragleave', () => {
+            message.innerText = 'Upload HTML file:';
+            container.classList.remove('drag');
+          });
+          container.addEventListener('dragover', event => {
+            event.preventDefault();
+          });
+          container.addEventListener('drop', event => {
+            event.stopPropagation();
+            event.preventDefault();
+            input.files = event.dataTransfer.files;
+            setTimeout(() => container.dispatchEvent(new Event('dragleave')), 100);
+          });
+        })
+    </script>
+    <link rel="icon" href="https://jfhr.de/favicon.jpg" type="image/jpeg">
+</head>
+<body>
+<main class="container">
+    <h1>HTML 2 Tumblr</h1>
+    <p>
+        This website lets you convert HTML documents to tumblr post drafts.
+        <b>Please note that this website is not associated with or endorsed by tumblr.</b>
+    </p>
+    <hr>
+
+    <% if (user) { %>
+        <p>You are connected to <b><%= user.name %></b></p>
+        <form id="upload-form" method="post" action="/post-to-tumblr" encType="multipart/form-data">
+            <div id="upload-container">
+                <label id="upload-label">
+                    <span id="upload-message">Upload HTML file:</span>
+                    <input id="upload-input" type="file" accept="text/html, application/zip" required name="html"/>
+                </label>
+            </div>
+
+            <p>
+                <label>
+                    Select a blog:
+                    <select name="blog" required>
+                        <% for (const blog of user.blogs) { %>
+                            <option label="<%= blog.name %>.tumblr.com" value="<%= blog.name %>"></option>
+                        <% } %>
+                    </select>
+                </label>
+            </p>
+
+            <button id="upload-submit">Turn this HTML into a tumblr draft</button>
+        </form>
+    <% } else { %>
+        <form id="connect-form" method="get" action="/tumblr-login">
+            <button id="upload-submit">Connect to your tumblr account to use</button>
+            <br>
+            <label>
+                <input type="checkbox" name="remember_me">
+                Remember my tumblr account for two weeks
+                (don't check this if you use a shared computer)
+            </label>
+        </form>
+    <% } %>
+
+    <br>
+    <hr>
+
+    <h2>How does it work?</h2>
+    <ol>
+        <li>Login with your tumblr account</li>
+        <li>Upload an HTML file, or a ZIP archive containing an <code>index.html</code> file</li>
+        <li>The generated tumblr post will be saved to your drafts, where you can edit and publish it</li>
+    </ol>
+    <h2>Does this site steal my data?</h2>
+    <p>
+        No, this site doesn't store any data about you.
+        When you connect with a tumblr account, the tumblr access token is stored as a cookie in your browser.
+        When you upload an HTML file, it is converted into a tumblr post and sent to the tumblr API as a post draft.
+    </p>
+    <h2>Is this site open source?</h2>
+    <p>
+        The code for converting HTML into tumblr posts is open source:
+        <a href="https://github.com/jfhr/deltaconvert">https://github.com/jfhr/deltaconvert</a>
+    </p>
+    <p>
+        The website itself is not open-sourced, but likely will be soon.
+    </p>
+    <h2>Something's not working!</h2>
+    <p>
+        Please tell me!
+        Send an email to <a href="mailto:me@jfhr.de?subject=HTML2Tumblr is not working">me@jfhr.de</a>
+    </p>
+    <p>
+        Include in the email <b>what you did</b>, <b>what you expected to happen</b> and <b>what actually happened</b>.
+    </p>
+    <h2>Is there an API?</h2>
+    <p>
+        Yes, send a <code>POST</code> request with <code>text/html</code> content to
+        <code>https://html2tumblr.jfhr.de/api/html2npf</code>
+    </p>
+    <p>
+        The response will be a JSON structure that conforms to the tumblr
+        <a href="https://help.tumblr.com/hc/en-us/articles/360010901913-Using-the-Neue-Post-Format">
+            Neue Post Format</a>.
+        You can then send that structure to the tumblr API.
+    </p>
+    <p>
+        For example:
+    </p>
+
+    <pre><code class="shell">curl https://html2tumblr.jfhr.de/api/html2npf \
+    -H 'content-type: text/html; charset=utf-8' \
+    -d '&lt;p&gt;The &lt;span style="color:#ff0000"&gt;cake&lt;/span&gt; is a &lt;b&gt;lie&lt;/b&gt;!&lt;/p&gt;' \
+    | jq</code></pre>
+
+    <pre><code>{
+  "content": [
+    {
+      "type": "text",
+      "text": "The cake is a lie!",
+      "formatting": [
+        {
+          "start": 4,
+          "end": 8,
+          "type": "color",
+          "hex": "#ff0000"
+        },
+        {
+          "start": 14,
+          "end": 17,
+          "type": "bold"
+        }
+      ]
+    }
+  ]
+}</code></pre>
+</main>
+
+<footer class="container">
+    <hr>
+    <p>
+        Made with 🩷 by <a href="https://jfhr.de" rel="author">jfhr</a>
+    </p>
+</footer>
+</body>
+</html>
