@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>HTML 2 Tumblr</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <style>
+      html {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        color-scheme: light dark;
+      }
+
+      .container {
+        --body-width: 100%;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: var(--body-width);
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      @media (min-width: 576px) {
+        .container {
+          --body-width: 540px
+        }
+      }
+
+      @media (min-width: 768px) {
+        .container {
+          --body-width: 720px
+        }
+      }
+
+      @media (min-width: 992px) {
+        .container {
+          --body-width: 960px
+        }
+      }
+
+      @media (min-width: 1200px) {
+        .container {
+          --body-width: 1140px
+        }
+      }
+
+      @media (min-width: 1400px) {
+        .container {
+          --body-width: 1320px
+        }
+      }
+
+      @keyframes move-background {
+        from {
+          background-position: 0 50%;
+        }
+        to {
+          background-position: 200% 50%;
+        }
+      }
+
+      @media (prefers-color-scheme: dark) {
+        a {
+          color: rgb(140, 140, 255);
+        }
+      }
+    </style>
+    <link rel="icon" href="https://jfhr.de/favicon.jpg" type="image/jpeg">
+</head>
+<body>
+<main class="container">
+    <h1>Something went wrong with your file :(</h1>
+    <p>
+        Possible reasons:
+    </p>
+    <ul>
+        <li>Your file is not actually an HTML file</li>
+        <li>You've exceeded your tumblr post limit</li>
+        <li>html2tumblr got really popular and exceeded its tumblr API limit</li>
+        <li>A bug in html2tumblr</li>
+        <li>A bug in the tumblr API</li>
+    </ul>
+    <h2>What do I do now?</h2>
+    <p>
+        If you've ruled out the first two items above, please try again!
+        If this keeps happening, please send an email to
+        <a href="mailto:me@jfhr.de?subject=HTML2Tumblr is not working">me@jfhr.de</a>.
+    </p>
+</main>
+
+<footer class="container">
+    <hr>
+    <p>
+        Made with 🩷 by <a href="https://jfhr.de" rel="author">jfhr</a>
+    </p>
+</footer>
+</body>
+</html>

@@ -4,21 +4,17 @@ const cookieParser = require('cookie-parser')
 const fileUpload = require('express-fileupload');
 const oauth = require("./oauth-promisified");
 const {htmlToNpf} = require('deltaconvert');
+const {env} = require("./env");
 
 const app = express();
 app.disable('x-powered-by');
 app.set('view engine', 'ejs');
 app.set('views', 'public');
-app.use(cookieParser());
+app.use(cookieParser(env('COOKIE_SIGNING_SECRET')));
 
 const HTML = express.text({
   type: 'text/html',
   limit: 8_192_000,
-});
-
-const URLENCODED = express.urlencoded({
-  limit: 8_192_000,
-  extended: false,
 });
 
 const FILE_UPLOAD = fileUpload({
@@ -29,8 +25,8 @@ const FILE_UPLOAD = fileUpload({
  * @return {Promise<{ access_token: string, access_token_secret: string } | null>}
  */
 async function getTumblrAccessTokenAndSecret(req) {
-  const access_token = req.cookies.tumblr_access_token;
-  const access_token_secret = req.cookies.tumblr_access_token_secret;
+  const access_token = req.signedCookies.tumblr_access_token;
+  const access_token_secret = req.signedCookies.tumblr_access_token_secret;
   if (!access_token || !access_token_secret) {
     return null;
   }
@@ -67,15 +63,15 @@ app.get('/tumblr-login', async (req, res) => {
   const {remember_me} = req.query;
   const {token, token_secret} = await oauth.getOAuthRequestToken();
 
-  res.cookie('tumblr_temporary_token', token, {httpOnly: true});
-  res.cookie('tumblr_temporary_token_secret', token_secret, {httpOnly: true});
+  res.cookie('tumblr_temporary_token', token, {httpOnly: true, signed: true});
+  res.cookie('tumblr_temporary_token_secret', token_secret, {httpOnly: true, signed: true});
   res.cookie('remember_me', !!remember_me, {httpOnly: true, maxAge: _14days()});
   res.redirect('/tumblr-authorize');
 });
 
 app.get('/tumblr-authorize', async (req, res) => {
   const authorizeURL = new URL('https://www.tumblr.com/oauth/authorize');
-  const token = req.cookies.tumblr_temporary_token;
+  const token = req.signedCookies.tumblr_temporary_token;
   if (!token) {
     res.redirect('/');
     return;
@@ -94,7 +90,7 @@ function getMaxAgeForTumblrAccessTokens(req) {
 
 app.get('/tumblr-callback', async (req, res) => {
   const {oauth_token, oauth_verifier} = req.query;
-  const token_secret = req.cookies.tumblr_temporary_token_secret;
+  const token_secret = req.signedCookies.tumblr_temporary_token_secret;
   if (!token_secret) {
     res.redirect('/');
     return;
@@ -106,24 +102,41 @@ app.get('/tumblr-callback', async (req, res) => {
   } = await oauth.getOAuthAccessToken(oauth_token, token_secret, oauth_verifier);
 
   const maxAge = getMaxAgeForTumblrAccessTokens(req);
-  res.cookie('tumblr_access_token', oauth_access_token, {httpOnly: true, maxAge});
-  res.cookie('tumblr_access_token_secret', oauth_access_token_secret, {httpOnly: true, maxAge});
-  res.clearCookie('tumblr_temporary_token', {httpOnly: true});
-  res.clearCookie('tumblr_temporary_token_secret', {httpOnly: true});
+  res.cookie('tumblr_access_token', oauth_access_token, {httpOnly: true, maxAge, signed: true});
+  res.cookie('tumblr_access_token_secret', oauth_access_token_secret, {httpOnly: true, maxAge, signed: true});
+  res.clearCookie('tumblr_temporary_token', {httpOnly: true, signed: true});
+  res.clearCookie('tumblr_temporary_token_secret', {httpOnly: true, signed: true});
   res.redirect('/');
 });
 
 app.post('/post-to-tumblr', FILE_UPLOAD, async (req, res) => {
-  console.log({body: req.body, files: req.files});
+  const connection = await getTumblrAccessTokenAndSecret(req);
+  if (!connection) {
+    res.redirect('/tumblr-login');
+    return;
+  }
 
-  const {access_token, access_token_secret} = await getTumblrAccessTokenAndSecret(req);
-  const blog = req.body.blog;
-  const html = req.files.html.data.toString();
-  const npf = htmlToNpf(html);
-  const body = JSON.stringify({ ...npf, state: 'draft' });
-  const result = await oauth.post(`https://api.tumblr.com/v2/blog/${blog}/posts`, access_token, access_token_secret, body, 'application/json');
-  const data = JSON.parse(result.data);
-  res.redirect(`https://www.tumblr.com/edit/${blog}/${data.response.id}`);
+  const {access_token, access_token_secret} = connection;
+  try {
+    const blog = req.body.blog;
+    const html = req.files.html.data.toString();
+    const npf = htmlToNpf(html);
+    const body = JSON.stringify({...npf, state: 'draft'});
+    const result = await oauth.post(`https://api.tumblr.com/v2/blog/${blog}/posts`,
+      access_token,
+      access_token_secret,
+      body,
+      'application/json'
+    );
+    const data = JSON.parse(result.data);
+    res.redirect(`https://www.tumblr.com/edit/${blog}/${data.response.id}`);
+  }
+
+  catch (error) {
+    console.error('/post-to-tumblr', error);
+    res.statusCode = 500;
+    res.render('error.ejs');
+  }
 });
 
 const port = parseInt(process.env.PORT);

@@ -120,7 +120,6 @@
       }
       @media (prefers-reduced-motion: no-preference) {
         #upload-submit:hover {
-          /*background: linear-gradient(90deg, #5acffa, #f5abb9, #ffffff, #f5abb9, #5acffa);*/
           background-size: 200% 200%;
           animation: move-background;
           animation-duration: 2s;
@@ -139,7 +138,14 @@
       .shell:before {
         content: '$ ';
       }
+
+      pre {
+        overflow-x: scroll;
+      }
     </style>
+    <link rel="icon" href="https://jfhr.de/favicon.jpg" type="image/jpeg">
+
+    <% if (user) { %>
     <script>
         window.addEventListener('DOMContentLoaded', () => {
           const input = document.getElementById('upload-input');
@@ -164,7 +170,7 @@
           });
         })
     </script>
-    <link rel="icon" href="https://jfhr.de/favicon.jpg" type="image/jpeg">
+    <% } %>
 </head>
 <body>
 <main class="container">
