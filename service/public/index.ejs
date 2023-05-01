@@ -59,7 +59,11 @@
         }
       }
 
-      #upload-container {
+      <%#
+        Styles for the file drag-and-drop area. The .active class is added by JS after DOMContentLoaded.
+        Since drag-and-drop depends on JS, the the drag-and-drop CSS should only be active if JS is available.
+      %>
+      #upload-container.active {
         width: 100%;
         height: 400px;
         border: 2px dashed hsl(0, 0%, 50%);
@@ -68,26 +72,29 @@
         transition: background-color 0.2s;
       }
 
-      #upload-container:hover, #upload-container.drag {
+      #upload-container.active:hover, #upload-container.active.drag {
         border: 2px dashed hsl(0, 0%, 40%);
         background-color: hsl(0, 0%, 70%);
       }
 
       @media (prefers-color-scheme: dark) {
-        #upload-container {
+        #upload-container.active {
           border: 2px dashed hsl(0, 0%, 40%);
           background-color: hsl(0, 0%, 20%);
         }
-        #upload-container:hover, #upload-container.drag {
+        #upload-container.active:hover, #upload-container.active.drag {
           border: 2px dashed hsl(0, 0%, 50%);
           background-color: hsl(0, 0%, 30%);
         }
       }
 
       #upload-label {
+        font-size: larger;
+      }
+
+      #upload-container.active > #upload-label {
         width: 100%;
         height: 100%;
-        font-size: larger;
 
         display: flex;
         align-items: center;
@@ -149,9 +156,13 @@
     <% if (user) { %>
     <script>
         window.addEventListener('DOMContentLoaded', () => {
+          const container = document.getElementById('upload-container');
           const input = document.getElementById('upload-input');
           const message = document.getElementById('upload-message');
-          const container = document.getElementById('upload-container');
+
+          <%# Enable the visual drag-and-drop area %>
+          container.classList.add('active');
+
           container.addEventListener('dragenter', () => {
             message.innerText = 'Drop HTML file:';
             container.classList.add('drag');
@@ -169,7 +180,7 @@
             input.files = event.dataTransfer.files;
             setTimeout(() => container.dispatchEvent(new Event('dragleave')), 100);
           });
-        })
+        });
     </script>
     <% } %>
 </head>
